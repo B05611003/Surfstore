@@ -54,6 +54,7 @@ func NewRaftServer(id int64, ips []string, blockStoreAddr string) (*RaftSurfstor
 
 	isCrashedMutex := &sync.RWMutex{}
 	isLeaderMutex := &sync.RWMutex{}
+
 	server := RaftSurfstore{
 		lock:     sync.Mutex{},
 		isLeader: false,
@@ -70,14 +71,19 @@ func NewRaftServer(id int64, ips []string, blockStoreAddr string) (*RaftSurfstor
 		lastApplied:    -1,
 		pendingCommits: make([]chan bool, 0),
 
+		// newCommitReadyChan: make(chan struct{}, 16),
+
 		isLeaderMutex: isLeaderMutex,
 		isLeaderCond:  sync.NewCond(isLeaderMutex),
 
 		isCrashed:      false,
 		notCrashedCond: sync.NewCond(isCrashedMutex),
 		isCrashedMutex: isCrashedMutex,
-	}
 
+		// nextIndex:  make(map[int]int),
+		// matchIndex: make(map[int]int),
+	}
+	// go server.commitChanSender()
 	return &server, nil
 }
 

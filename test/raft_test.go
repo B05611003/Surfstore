@@ -85,7 +85,7 @@ func TestRaftFollowersGetUpdates(t *testing.T) {
 	// TEST
 	leaderIdx := 0
 	test.Clients[leaderIdx].SetLeader(test.Context, &emptypb.Empty{})
-
+	// test.Clients[leaderIdx].SendHeartbeat(test.Context, &emptypb.Empty{})
 	filemeta1 := &surfstore.FileMetaData{
 		Filename:      "testFile1",
 		Version:       1,
@@ -106,11 +106,11 @@ func TestRaftFollowersGetUpdates(t *testing.T) {
 		state, _ := server.GetInternalState(test.Context, &emptypb.Empty{})
 		if !SameLog(goldenLog, state.Log) {
 			t.Logf("num %d Logs do not match:\n%v\n%v\n", i, goldenLog, state.Log)
-			//t.Fail()
+			t.Fail()
 		}
 		if !SameMeta(goldenMeta.FileMetaMap, state.MetaMap.FileInfoMap) {
 			t.Logf("num %d MetaStore state is not correct:\n%v\n%v\n", i, goldenMeta.FileMetaMap, state.MetaMap.FileInfoMap)
-			//t.Fail()
+			t.Fail()
 		}
 
 	}
