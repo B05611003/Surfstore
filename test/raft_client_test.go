@@ -1,9 +1,10 @@
 package SurfTest
 
 import (
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	"os"
 	"testing"
+
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	//	"time"
 )
 
@@ -51,11 +52,10 @@ func TestSyncTwoClientsSameFileLeaderFailure(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Sync failed")
 	}
-
 	//client1 syncs
 	err = SyncClient("localhost:8080", "test0", BLOCK_SIZE, cfgPath)
 	if err != nil {
-		t.Fatalf("Sync failed")
+		t.Fatalf("Sync failed %v", err)
 	}
 
 	workingDir, _ := os.Getwd()
@@ -74,7 +74,7 @@ func TestSyncTwoClientsSameFileLeaderFailure(t *testing.T) {
 		t.Fatalf("Wrong number of entries in client1 meta file")
 	}
 	if fileMeta1[file1].Version != 1 {
-		t.Fatalf("Wrong version for file1 in client1 metadata.")
+		t.Fatalf("Wrong version for file1 in client1 metadata : ver%d", fileMeta1[file1].Version)
 	}
 
 	c, e := SameFile(workingDir+"/test0/multi_file1.txt", SRC_PATH+"/multi_file1.txt")
