@@ -222,6 +222,7 @@ func (s *RaftSurfstore) CommitEntry(serverId, entryId int64, commitChan chan *Ap
 //5. If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, index
 //of last new entry)
 func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInput) (*AppendEntryOutput, error) {
+	isRestore := false
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	if len(input.Entries) == 0 {
@@ -246,6 +247,7 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 			s.isCrashedMutex.Lock()
 			s.notCrashedCond.Wait()
 			fmt.Printf("[Server %d] restored from crashed\n", s.serverId)
+			isRestore = true
 			s.isCrashedMutex.Unlock()
 		}
 		// output.Success = true
@@ -272,11 +274,14 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 
 	s.commitIndex = int64(math.Min(float64(input.LeaderCommit), float64(len(s.log)-1)))
 	//fmt.Printf("input.LeaderCommit:%d lastApplied:%d, commitIndex:%d\n", input.LeaderCommit, s.lastApplied, s.commitIndex)
-	for s.lastApplied < s.commitIndex {
-		s.lastApplied++
-		entry := s.log[s.lastApplied]
-		s.metaStore.UpdateFile(ctx, entry.FileMetaData)
-		fmt.Printf("[Server %d] new commit index syncing metaStore: %v\n", s.serverId, s.metaStore.FileMetaMap)
+	if !isRestore {
+
+		for s.lastApplied < s.commitIndex {
+			s.lastApplied++
+			entry := s.log[s.lastApplied]
+			s.metaStore.UpdateFile(ctx, entry.FileMetaData)
+			fmt.Printf("[Server %d] new commit index syncing metaStore: %v\n", s.serverId, s.metaStore.FileMetaMap)
+		}
 	}
 	output.Success = true
 
