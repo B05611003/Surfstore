@@ -109,7 +109,7 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 		Term:         s.term,
 		FileMetaData: filemeta,
 	}
-	fmt.Printf("[Server %d]: get update file command", s.serverId)
+	fmt.Printf("[Server %d]: get update file command\n", s.serverId)
 	s.log = append(s.log, &op)
 	commited := make(chan bool)
 	s.lock.Lock()
@@ -150,7 +150,7 @@ func (s *RaftSurfstore) AttemptCommit() bool {
 			commitCount++
 		}
 		if commitCount > len(s.ipList)/2 {
-			s.pendingCommits[targetId] <- true
+			s.pendingCommits[len(s.pendingCommits)-1] <- true
 			s.commitIndex = targetId
 			break
 		}
