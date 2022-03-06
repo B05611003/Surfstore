@@ -96,6 +96,11 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 			Version: -1,
 		}, ERR_NOT_LEADER
 	}
+	if s.isCrashed {
+		return &Version{
+			Version: -1,
+		}, ERR_SERVER_CRASHED
+	}
 	op := UpdateOperation{
 		Term:         s.term,
 		FileMetaData: filemeta,
