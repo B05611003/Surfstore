@@ -117,6 +117,7 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 	success := <-commited
 	fmt.Println("finish commit")
 	if success {
+		// commited, so send the heartbeat
 		s.SendHeartbeat(ctx, &emptypb.Empty{})
 		return s.metaStore.UpdateFile(ctx, filemeta)
 	}
@@ -241,7 +242,7 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 	s.commitIndex = int64(math.Min(float64(input.LeaderCommit), float64(len(s.log)-1)))
 	//fmt.Printf("input.LeaderCommit:%d lastApplied:%d, commitIndex:%d\n", input.LeaderCommit, s.lastApplied, s.commitIndex)
 	for s.lastApplied < s.commitIndex {
-
+		fmt.Printf("[Server %d] new commit index syncing metaStore\n", s.serverId)
 		s.lastApplied++
 		entry := s.log[s.lastApplied]
 		s.metaStore.UpdateFile(ctx, entry.FileMetaData)
@@ -263,7 +264,7 @@ func (s *RaftSurfstore) SetLeader(ctx context.Context, _ *emptypb.Empty) (*Succe
 	if s.isCrashed {
 		return &Success{Flag: false}, ERR_SERVER_CRASHED
 	}
-	fmt.Printf("[server%d] is now leader\n", s.serverId)
+	fmt.Printf("[server %d] is now leader\n", s.serverId)
 	s.term++
 	s.isLeader = true
 	return &Success{Flag: true}, nil

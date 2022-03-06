@@ -20,7 +20,7 @@ const (
 
 // Implement the logic for a client syncing with the server .
 func ClientSync(client RPCClient) {
-	fmt.Printf("%s start func ClientSync\n", client.BaseDir)
+	fmt.Printf("[Client %s] start func ClientSync\n", client.BaseDir)
 	/*
 		The client should first scan the base directory, and for each file, compute that file’s hash list.
 		The client should then consult the local index file and compare the results, to see whether
@@ -64,7 +64,7 @@ func ClientSync(client RPCClient) {
 	if err != nil {
 		log.Fatalf("error while local sync, %v", err)
 	}
-	fmt.Printf("localFileMeta:%v\n", localFileMetaDataMap)
+	fmt.Printf("[Client %s] localFileMeta:%v\n", client.BaseDir, localFileMetaDataMap)
 	// download the remote index.txt
 	remoteFileMetaMap := make(map[string]*FileMetaData)
 	err = client.GetFileInfoMap(&remoteFileMetaMap)
@@ -109,8 +109,8 @@ func ClientSync(client RPCClient) {
 	}
 
 	WriteMetaFile(localFileMetaDataMap, client.BaseDir)
-	fmt.Printf("%s done func ClientSyn\n", client.BaseDir)
-	fmt.Printf("client: %s,info: %v\n", client.BaseDir, localFileMetaDataMap)
+	fmt.Printf("[Client %s] done func ClientSyn\n", client.BaseDir)
+	fmt.Printf("[Client %s] info: %v\n", client.BaseDir, localFileMetaDataMap)
 
 }
 
@@ -217,7 +217,7 @@ func compareHashList(hash1 []string, hash2 []string) bool {
 // if the file DNE in server, and not the deleted file
 // upload it to the server
 func upload(client RPCClient, localFileMetaData *FileMetaData, localFileMetaDataMap *map[string]*FileMetaData, status int) error {
-	fmt.Printf("%s start func upload\n", client.BaseDir)
+	fmt.Printf("[Client %s] start func upload\n", client.BaseDir)
 	fileName := path.Join(client.BaseDir, localFileMetaData.Filename)
 
 	if status == Delete {
@@ -274,13 +274,13 @@ func upload(client RPCClient, localFileMetaData *FileMetaData, localFileMetaData
 		(*localFileMetaDataMap)[localFileMetaData.Filename] = localFileMetaData
 		// (*localFileMetaDataMap)[localFileMetaData.Filename].Version += 1
 	}
-	fmt.Printf("%s done func upload\n", client.BaseDir)
+	fmt.Printf("[Client %s] done func upload\n", client.BaseDir)
 	return nil
 
 }
 
 func download(client RPCClient, remoteFileMetaData *FileMetaData, localFileMetaDataMap *map[string]*FileMetaData) error {
-	fmt.Printf("%s start func download\n", client.BaseDir)
+	fmt.Printf("[Client %s] start func download\n", client.BaseDir)
 	fileName := path.Join(client.BaseDir, remoteFileMetaData.Filename)
 	if _, err := os.Stat(fileName); os.IsNotExist(err) {
 		os.Create(fileName)
@@ -325,7 +325,7 @@ func download(client RPCClient, remoteFileMetaData *FileMetaData, localFileMetaD
 		Filename:      remoteFileMetaData.Filename,
 		BlockHashList: remoteFileMetaData.BlockHashList,
 	}
-	fmt.Printf("%s done func download\n", client.BaseDir)
+	fmt.Printf("[Client %s] done func download\n", client.BaseDir)
 	return nil
 }
 
