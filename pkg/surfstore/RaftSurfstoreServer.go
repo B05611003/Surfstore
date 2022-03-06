@@ -67,9 +67,8 @@ func (s *RaftSurfstore) countAlive() {
 			}
 			client := NewRaftSurfstoreClient(conn)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-			in := new(emptypb.Empty)
 			defer cancel()
-			if state, err := client.IsCrashed(ctx, in); !state.IsCrashed && err == nil {
+			if state, err := client.IsCrashed(ctx, &emptypb.Empty{}); !state.IsCrashed && err == nil {
 				count++
 			}
 		}
@@ -194,6 +193,9 @@ func (s *RaftSurfstore) CommitEntry(serverId, entryId int64, commitChan chan *Ap
 	defer cancel()
 
 	output, err := client.AppendEntries(ctx, input)
+	for !output.Success{
+		client.
+	}
 	commitChan <- output
 	// TODO update state s.nextIndex
 
@@ -225,8 +227,16 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 		return output, fmt.Errorf("old term\n")
 	}
 	if s.isCrashed {
-		fmt.Printf("[Server %d] But server %d is crashed\n", s.serverId, s.serverId)
-		return output, ERR_SERVER_CRASHED
+		if len(input.Entries) == 0 {
+			fmt.Printf("[Server %d] But server %d is crashed\n", s.serverId, s.serverId)
+			return output, ERR_SERVER_CRASHED
+		}
+		// try block until restore
+		for s.isCrashed(){
+			s.isCrashedMutex.Lock()
+			s.notCrashedCond.Wait()
+			s.isCrashedMutex.Unlock()
+		}
 	}
 
 	if input.Term > s.term {
@@ -356,6 +366,12 @@ func (s *RaftSurfstore) Restore(ctx context.Context, _ *emptypb.Empty) (*Success
 
 // DO NOT EDIT
 func (s *RaftSurfstore) IsCrashed(ctx context.Context, _ *emptypb.Empty) (*CrashedState, error) {
+	return &CrashedState{IsCrashed: s.isCrashed}, nil
+}
+func (s *RaftSurfstore) CrashedHold(ctx context.Context, _ *emptypb.Empty) (*CrashedState, error) {
+	s.isCrashedMutex.Lock()
+	s.notCrashedCond.Wait()
+	s.isCrashedMutex.Unlock()
 	return &CrashedState{IsCrashed: s.isCrashed}, nil
 }
 
