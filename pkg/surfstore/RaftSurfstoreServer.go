@@ -109,7 +109,7 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 		Term:         s.term,
 		FileMetaData: filemeta,
 	}
-	fmt.Printf("[Server %d]: get update file command\n", s.serverId)
+	fmt.Printf("[Server %d]: get update file command with filemetadata:%v\n", s.serverId, filemeta)
 	s.log = append(s.log, &op)
 	commited := make(chan bool)
 	s.lock.Lock()
@@ -124,6 +124,8 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 		ver, err := s.metaStore.UpdateFile(ctx, filemeta)
 		if err != nil {
 			fmt.Printf("[Server %d]: update metadata error!!\n", s.serverId)
+		} else {
+			fmt.Printf("[Server %d]: current metaData:%v\n", s.serverId, s.metaStore.FileMetaMap)
 		}
 		return ver, err
 	}
