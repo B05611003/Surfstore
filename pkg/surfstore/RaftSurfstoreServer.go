@@ -347,6 +347,7 @@ func (s *RaftSurfstore) Crash(ctx context.Context, _ *emptypb.Empty) (*Success, 
 func (s *RaftSurfstore) Restore(ctx context.Context, _ *emptypb.Empty) (*Success, error) {
 	s.isCrashedMutex.Lock()
 	s.isCrashed = false
+	fmt.Printf("[Server %d] is now recover\n", s.serverId)
 	s.notCrashedCond.Broadcast()
 	s.isCrashedMutex.Unlock()
 
