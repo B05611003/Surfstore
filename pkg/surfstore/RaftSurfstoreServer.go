@@ -273,10 +273,10 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 	s.commitIndex = int64(math.Min(float64(input.LeaderCommit), float64(len(s.log)-1)))
 	//fmt.Printf("input.LeaderCommit:%d lastApplied:%d, commitIndex:%d\n", input.LeaderCommit, s.lastApplied, s.commitIndex)
 	for s.lastApplied < s.commitIndex {
-		fmt.Printf("[Server %d] new commit index syncing metaStore\n", s.serverId)
 		s.lastApplied++
 		entry := s.log[s.lastApplied]
 		s.metaStore.UpdateFile(ctx, entry.FileMetaData)
+		fmt.Printf("[Server %d] new commit index syncing metaStore: %v\n", s.serverId, s.metaStore.FileMetaMap)
 	}
 	output.Success = true
 
