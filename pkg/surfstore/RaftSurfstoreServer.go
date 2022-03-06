@@ -124,7 +124,7 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 	go s.AttemptCommit(index)
 	success := <-commited
 	fmt.Println("finish commit")
-	if success {
+	if success && s.isLeader {
 		// commited, so send the heartbeat
 
 		s.SendHeartbeat(ctx, &emptypb.Empty{})
@@ -167,6 +167,7 @@ func (s *RaftSurfstore) AttemptCommit(index int) bool {
 		}
 		if commitCount > len(s.ipList)/2 {
 			s.pendingCommits[len(s.pendingCommits)-1] <- true
+			fmt.Printf("[Server %d] major alive\n", s.serverId)
 			s.commitIndex = targetId
 			break
 		}
