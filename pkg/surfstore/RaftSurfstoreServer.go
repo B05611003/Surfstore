@@ -121,7 +121,11 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 	if success {
 		// commited, so send the heartbeat
 		s.SendHeartbeat(ctx, &emptypb.Empty{})
-		return s.metaStore.UpdateFile(ctx, filemeta)
+		ver, err := s.metaStore.UpdateFile(ctx, filemeta)
+		if err != nil {
+			fmt.Printf("[Server %d]: update metadata error!!\n", s.serverId)
+		}
+		return ver, err
 	}
 	return &Version{
 		Version: -1,

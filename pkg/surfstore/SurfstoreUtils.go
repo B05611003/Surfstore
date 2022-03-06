@@ -92,7 +92,7 @@ func ClientSync(client RPCClient) {
 					download(client, remoteFileMetaData, &localFileMetaDataMap)
 				} else {
 					// if new file in this local sync already exist in server or server changed
-					fmt.Printf("[Client %s] remote has file need to change, uploading", client.BaseDir)
+					fmt.Printf("[Client %s] remote has file need to change, uploading\n", client.BaseDir)
 					upload(client, localFileMetaData, &localFileMetaDataMap, localStatus[fileName])
 
 				}
