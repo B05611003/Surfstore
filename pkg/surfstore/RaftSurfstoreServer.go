@@ -56,6 +56,7 @@ func (s *RaftSurfstore) GetFileInfoMap(ctx context.Context, empty *emptypb.Empty
 	s.countAlive()
 	return &FileInfoMap{FileInfoMap: s.metaStore.FileMetaMap}, nil
 }
+
 func (s *RaftSurfstore) countAlive() {
 	count := 0
 	for count < len(s.ipList)/2 {
@@ -91,7 +92,9 @@ func (s *RaftSurfstore) GetBlockStoreAddr(ctx context.Context, empty *emptypb.Em
 // equal the submit command
 func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) (*Version, error) {
 	if !s.isLeader {
-		return nil, ERR_NOT_LEADER
+		return &Version{
+			Version: -1,
+		}, ERR_NOT_LEADER
 	}
 	op := UpdateOperation{
 		Term:         s.term,
@@ -105,11 +108,12 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 	success := <-commited
 	fmt.Println("finish commit")
 	if success {
-
 		s.SendHeartbeat(ctx, &emptypb.Empty{})
 		return s.metaStore.UpdateFile(ctx, filemeta)
 	}
-	return nil, fmt.Errorf("something went worng")
+	return &Version{
+		Version: -1,
+	}, fmt.Errorf("something went worng")
 }
 
 // Aux function
