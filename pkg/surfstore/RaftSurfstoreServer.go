@@ -91,19 +91,19 @@ func (s *RaftSurfstore) GetBlockStoreAddr(ctx context.Context, empty *emptypb.Em
 
 // equal the submit command
 func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) (*Version, error) {
+	s.isCrashedMutex.Lock()
+	if s.isCrashed {
+		s.isCrashedMutex.Unlock()
+		return &Version{
+			Version: -1,
+		}, ERR_SERVER_CRASHED
+	}
+	s.isCrashedMutex.Unlock()
 	if !s.isLeader {
 		return &Version{
 			Version: -1,
 		}, ERR_NOT_LEADER
 	}
-	// s.isCrashedMutex.Lock()
-	// if s.isCrashed {
-	// 	s.isCrashedMutex.Unlock()
-	// 	return &Version{
-	// 		Version: -1,
-	// 	}, ERR_SERVER_CRASHED
-	// }
-	// s.isCrashedMutex.Unlock()
 
 	op := UpdateOperation{
 		Term:         s.term,
