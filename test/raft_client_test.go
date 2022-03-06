@@ -245,8 +245,8 @@ func TestSyncTwoClientsClusterFailure(t *testing.T) {
 		t.Fatalf("Sync failed")
 	}
 
-	test.Clients[0].Crash(test.Context, &emptypb.Empty{})
 	test.Clients[1].Crash(test.Context, &emptypb.Empty{})
+	test.Clients[2].Crash(test.Context, &emptypb.Empty{})
 
 	//client2 syncs
 	err = SyncClient("localhost:8080", "test1", BLOCK_SIZE, cfgPath)

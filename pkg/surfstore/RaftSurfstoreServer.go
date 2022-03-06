@@ -50,7 +50,6 @@ type RaftSurfstore struct {
 func (s *RaftSurfstore) GetFileInfoMap(ctx context.Context, empty *emptypb.Empty) (*FileInfoMap, error) {
 
 	if !s.isLeader || s.isCrashed {
-
 		return &FileInfoMap{FileInfoMap: s.metaStore.FileMetaMap}, ERR_NOT_LEADER
 	}
 	s.countAlive()
@@ -59,7 +58,7 @@ func (s *RaftSurfstore) GetFileInfoMap(ctx context.Context, empty *emptypb.Empty
 
 func (s *RaftSurfstore) countAlive() {
 	count := 0
-	for count < len(s.ipList)/2 {
+	for count < (len(s.ipList)+1)/2 {
 		count = 0
 		for _, addr := range s.ipList {
 			conn, err := grpc.Dial(addr, grpc.WithInsecure())
@@ -74,6 +73,7 @@ func (s *RaftSurfstore) countAlive() {
 				count++
 			}
 		}
+		// fmt.Printf("count:%d\n", count)
 	}
 	return
 }
@@ -155,6 +155,7 @@ func (s *RaftSurfstore) AttemptCommit() bool {
 		// TODO handle crashed
 		commit := <-commitChan
 		if commit != nil && commit.Success {
+			fmt.Printf("[Server %d] commit success\n", s.serverId)
 			commitCount++
 		}
 		if commitCount > len(s.ipList)/2 {
