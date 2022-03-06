@@ -195,14 +195,14 @@ func (s *RaftSurfstore) CommitEntry(serverId, entryId int64, commitChan chan *Ap
 		input.PrevLogTerm = s.log[entryId-1].Term
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
 	defer cancel()
 
 	output, err := client.AppendEntries(ctx, input)
 	if err != nil {
 		fmt.Printf("[Server %d] commitEntry append error:%v\n", s.serverId, err)
 	}
-
+	fmt.Printf("[Server %d] commitEntry append :%v\n", s.serverId, output)
 	commitChan <- output
 	// TODO update state s.nextIndex
 

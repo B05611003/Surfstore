@@ -3,7 +3,9 @@ package SurfTest
 import (
 	context "context"
 	"cse224/proj5/pkg/surfstore"
+	"fmt"
 	"testing"
+	"time"
 
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
@@ -94,6 +96,7 @@ func TestRaftFollowersGetUpdates(t *testing.T) {
 
 	goldenMeta := surfstore.NewMetaStore("")
 	goldenLog := make([]*surfstore.UpdateOperation, 0)
+
 	test.Clients[leaderIdx].UpdateFile(context.Background(), filemeta1)
 	goldenMeta.UpdateFile(test.Context, filemeta1)
 	goldenLog = append(goldenLog, &surfstore.UpdateOperation{
@@ -120,4 +123,68 @@ func TestRaftFollowersGetUpdates(t *testing.T) {
 		}
 
 	}
+}
+
+func TestRaftRecoverable(t *testing.T) {
+	t.Logf("leader1 gets a request while all other nodes are crashed. the crashed nodes recover.")
+	cfgPath := "./config_files/3nodes.txt"
+	test := InitTest(cfgPath, "8080")
+	defer EndTest(test)
+	filemeta1 := &surfstore.FileMetaData{
+		Filename:      "testFile1",
+		Version:       1,
+		BlockHashList: nil,
+	}
+	goldenMeta := surfstore.NewMetaStore("")
+	goldenLog := make([]*surfstore.UpdateOperation, 0)
+	goldenMeta.UpdateFile(test.Context, filemeta1)
+	goldenLog = append(goldenLog, &surfstore.UpdateOperation{
+		Term:         1,
+		FileMetaData: filemeta1,
+	})
+
+	test.Clients[0].SetLeader(test.Context, &emptypb.Empty{})
+	test.Clients[0].SendHeartbeat(test.Context, &emptypb.Empty{})
+	// worker1 := InitDirectoryWorker("test0", SRC_PATH)
+
+	// defer worker1.CleanUp()
+
+	//clients add different files
+	// file1 := "multi_file1.txt"
+
+	// err := worker1.AddFile(file1)
+	// if err != nil {
+	// 	t.FailNow()
+	// }
+	test.Clients[1].Crash(test.Context, &emptypb.Empty{})
+	test.Clients[2].Crash(test.Context, &emptypb.Empty{})
+
+	//client1 syncs
+	eChan := make(chan bool, 1)
+	go func() {
+		test.Clients[0].UpdateFile(context.Background(), filemeta1)
+		fmt.Println("finish")
+		eChan <- true
+	}()
+	time.Sleep(time.Second)
+	test.Clients[1].Restore(test.Context, &emptypb.Empty{})
+	test.Clients[2].Restore(test.Context, &emptypb.Empty{})
+
+	if <-eChan {
+		fmt.Printf("update done\n")
+	}
+
+	for i, server := range test.Clients {
+		state, _ := server.GetInternalState(test.Context, &emptypb.Empty{})
+		if !SameLog(goldenLog, state.Log) {
+			t.Logf("num %d Logs do not match:\n%v\n%v\n", i, goldenLog, state.Log)
+			t.Fail()
+		}
+		if !SameMeta(goldenMeta.FileMetaMap, state.MetaMap.FileInfoMap) {
+			t.Logf("num %d MetaStore state is not correct:\n%v\n%v\n", i, goldenMeta.FileMetaMap, state.MetaMap.FileInfoMap)
+			t.Fail()
+		}
+
+	}
+
 }

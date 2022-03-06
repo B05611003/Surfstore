@@ -3,7 +3,6 @@ package SurfTest
 import (
 	"os"
 	"testing"
-	"time"
 
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	//	"time"
@@ -307,75 +306,4 @@ func TestSyncTwoClientsClusterFailure(t *testing.T) {
 	if !c {
 		t.Fatalf("wrong file2 contents at client2")
 	}
-}
-func TestRaftRecoverable(t *testing.T) {
-	t.Logf("leader1 gets a request while all other nodes are crashed. the crashed nodes recover.")
-	cfgPath := "./config_files/3nodes.txt"
-	test := InitTest(cfgPath, "8080")
-	defer EndTest(test)
-	test.Clients[0].SetLeader(test.Context, &emptypb.Empty{})
-	test.Clients[0].SendHeartbeat(test.Context, &emptypb.Empty{})
-	worker1 := InitDirectoryWorker("test0", SRC_PATH)
-
-	defer worker1.CleanUp()
-
-	//clients add different files
-	file1 := "multi_file1.txt"
-
-	err := worker1.AddFile(file1)
-	if err != nil {
-		t.FailNow()
-	}
-	test.Clients[1].Crash(test.Context, &emptypb.Empty{})
-	test.Clients[2].Crash(test.Context, &emptypb.Empty{})
-
-	//client1 syncs
-	eChan := make(chan error, 1)
-	go func() {
-		err1 := SyncClient("localhost:8080", "test0", BLOCK_SIZE, cfgPath)
-		if err1 != nil {
-			t.Fatalf("Sync failed")
-		}
-
-		eChan <- err1
-
-	}()
-	time.Sleep(time.Second)
-	test.Clients[1].Restore(test.Context, &emptypb.Empty{})
-	test.Clients[2].Restore(test.Context, &emptypb.Empty{})
-
-	err = <-eChan
-	if err != nil {
-		t.Fatalf("no sync")
-	}
-
-	//client1 syncs
-
-	workingDir, _ := os.Getwd()
-
-	//check client1
-	_, err = os.Stat(workingDir + "/test0/" + META_FILENAME)
-	if err != nil {
-		t.Fatalf("Could not find meta file for client1")
-	}
-
-	fileMeta1, err := LoadMetaFromMetaFile(workingDir + "/test0/")
-	if err != nil {
-		t.Fatalf("Could not load meta file for client1")
-	}
-	if len(fileMeta1) != 1 {
-		t.Fatalf("Wrong number of entries in client1 meta file")
-	}
-	if fileMeta1[file1].Version != 1 {
-		t.Fatalf("Wrong version for file1 in client1 metadata : ver%d", fileMeta1[file1].Version)
-	}
-
-	c, e := SameFile(workingDir+"/test0/multi_file1.txt", SRC_PATH+"/multi_file1.txt")
-	if e != nil {
-		t.Fatalf("Could not read files in client base dirs.")
-	}
-	if !c {
-		t.Fatalf("file1 should change at client1")
-	}
-
 }
