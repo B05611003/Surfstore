@@ -78,7 +78,6 @@ func (s *RaftSurfstore) countAlive() {
 				count++
 			}
 		}
-		fmt.Printf("count:%d\n", count)
 	}
 	return
 }
@@ -246,6 +245,7 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 			fmt.Printf("[Server %d] restored from crashed\n", s.serverId)
 			s.isCrashedMutex.Unlock()
 		}
+		return output, nil
 	}
 
 	if input.Term > s.term {
@@ -356,6 +356,7 @@ func (s *RaftSurfstore) SendHeartbeat(ctx context.Context, _ *emptypb.Empty) (*S
 func (s *RaftSurfstore) Crash(ctx context.Context, _ *emptypb.Empty) (*Success, error) {
 	s.isCrashedMutex.Lock()
 	s.isCrashed = true
+	s.isLeader = false
 	fmt.Printf("[Server %d] is now crashed\n", s.serverId)
 	s.isCrashedMutex.Unlock()
 
