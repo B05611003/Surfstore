@@ -123,10 +123,10 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 
 	go s.AttemptCommit(index)
 	success := <-commited
-	fmt.Println("finish commit")
+	fmt.Printf("[Server %d] finish commit\n", s.serverId)
 	if success && s.isLeader {
 		// commited, so send the heartbeat
-
+		s.lastApplied++
 		s.SendHeartbeat(ctx, &emptypb.Empty{})
 		ver, err := s.metaStore.UpdateFile(ctx, filemeta)
 		if err != nil {
