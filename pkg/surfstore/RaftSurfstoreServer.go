@@ -109,10 +109,12 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 		Term:         s.term,
 		FileMetaData: filemeta,
 	}
-
+	fmt.Printf("[Server %d]: get update file command", s.serverId)
 	s.log = append(s.log, &op)
 	commited := make(chan bool)
+	s.lock.Lock()
 	s.pendingCommits = append(s.pendingCommits, commited)
+	s.lock.Unlock()
 	go s.AttemptCommit()
 	success := <-commited
 	fmt.Println("finish commit")
