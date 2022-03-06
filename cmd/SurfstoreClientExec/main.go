@@ -72,5 +72,6 @@ func main() {
 	}
 
 	rpcClient := surfstore.NewSurfstoreRPCClient(addrs, baseDir, blockSize)
+
 	surfstore.ClientSync(rpcClient)
 }

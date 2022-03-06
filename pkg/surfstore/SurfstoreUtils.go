@@ -109,13 +109,12 @@ func ClientSync(client RPCClient) {
 	}
 
 	WriteMetaFile(localFileMetaDataMap, client.BaseDir)
-	fmt.Printf("[Client %s] done func ClientSyn\n", client.BaseDir)
-	fmt.Printf("[Client %s] info: %v\n", client.BaseDir, localFileMetaDataMap)
+	fmt.Printf("[Client %s] done func ClientSync info: %v\n", client.BaseDir, localFileMetaDataMap)
 
 }
 
 func syncLocal(client RPCClient, dirInfoMap map[string]fs.FileInfo, indexFileMetaDataMap map[string]*FileMetaData) (map[string]*FileMetaData, map[string]int, error) {
-	fmt.Printf("%s start func syncLocal\n", client.BaseDir)
+	fmt.Printf("[Client %s] start func syncLocal\n", client.BaseDir)
 	localFileMetaDataMap := make(map[string]*FileMetaData)
 	localFileStatus := make(map[string]int)
 
@@ -174,7 +173,7 @@ func syncLocal(client RPCClient, dirInfoMap map[string]fs.FileInfo, indexFileMet
 			}
 		}
 	}
-	fmt.Printf("%s finish func syncLocal\n", client.BaseDir)
+	fmt.Printf("[Client %s] finish func syncLocal\n", client.BaseDir)
 	return localFileMetaDataMap, localFileStatus, nil
 }
 
