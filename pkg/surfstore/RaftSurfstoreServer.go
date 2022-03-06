@@ -92,8 +92,8 @@ func (s *RaftSurfstore) GetBlockStoreAddr(ctx context.Context, empty *emptypb.Em
 
 // equal the submit command
 func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) (*Version, error) {
-	// s.lock.Lock()
-	// defer s.lock.Unlock()
+	s.lock.Lock()
+	defer s.lock.Unlock()
 	s.isCrashedMutex.Lock()
 	if s.isCrashed {
 		s.isCrashedMutex.Unlock()
@@ -115,9 +115,9 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 	fmt.Printf("[Server %d]: get update file command with filemetadata:%v\n", s.serverId, filemeta)
 	s.log = append(s.log, &op)
 	commited := make(chan bool)
-	s.lock.Lock()
+
 	s.pendingCommits = append(s.pendingCommits, commited)
-	s.lock.Unlock()
+
 	go s.AttemptCommit()
 	success := <-commited
 	fmt.Println("finish commit")
