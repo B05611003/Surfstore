@@ -77,6 +77,7 @@ func ClientSync(client RPCClient) {
 	for fileName, localFileMetaData := range localFileMetaDataMap {
 		if remoteFileMetaData, ok := remoteFileMetaMap[fileName]; !ok {
 			// file metadata not exits on server, it is deleted file or need upload
+			fmt.Printf("[Client %s] remote DNE this file, uploading", client.BaseDir)
 			err := upload(client, localFileMetaData, &localFileMetaDataMap, localStatus[fileName])
 			if err != nil {
 				log.Println("Upload file failed: ", err)
@@ -85,11 +86,14 @@ func ClientSync(client RPCClient) {
 			// file both exist on server and local
 			if remoteFileMetaData.Version > localFileMetaData.Version {
 				download(client, remoteFileMetaData, &localFileMetaDataMap)
-			} else if remoteFileMetaData.Version == localFileMetaData.Version && localStatus[fileName] != Unchanged { //todo
+			} else if remoteFileMetaData.Version == localFileMetaData.Version && localStatus[fileName] != Unchanged {
 				if localStatus[fileName] == New {
 					download(client, remoteFileMetaData, &localFileMetaDataMap)
 				} else {
+					// if new file in this local sync already exist in server or server changed
+					fmt.Printf("[Client %s] remote has file need to change, uploading", client.BaseDir)
 					upload(client, localFileMetaData, &localFileMetaDataMap, localStatus[fileName])
+					localFileMetaDataMap[fileName].Version++
 				}
 			} else if remoteFileMetaData.Version < localFileMetaData.Version {
 				log.Println("something went wrong : local version highter than remote")
@@ -264,7 +268,7 @@ func upload(client RPCClient, localFileMetaData *FileMetaData, localFileMetaData
 		newRemoteFileMetaMap := make(map[string]*FileMetaData)
 		err = client.GetFileInfoMap(&newRemoteFileMetaMap)
 		if err != nil {
-			log.Fatalf("error while getting server info map, %v", err)
+			log.Fatalf("error while getting server info map, %v\n", err)
 		}
 		fmt.Printf("upload failed: ver%d vs ver %d\n", localFileMetaData.Version, newRemoteFileMetaMap[localFileMetaData.Filename].Version)
 		download(client, newRemoteFileMetaMap[localFileMetaData.Filename], localFileMetaDataMap)
