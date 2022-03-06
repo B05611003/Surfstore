@@ -128,12 +128,12 @@ func (surfClient *RPCClient) UpdateFile(fileMetaData *FileMetaData, latestVersio
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		ver, err := c.UpdateFile(ctx, fileMetaData)
-		if err != nil && err == ERR_NOT_LEADER {
+		if err != nil && (err == ERR_NOT_LEADER || err == ERR_SERVER_CRASHED) {
 			fmt.Printf("not leader\n")
 			conn.Close()
 			continue
 		} else if err != nil {
-			fmt.Printf("err:%v\n", err)
+			fmt.Printf("err in client.updatefile:%v\n", err)
 			return err
 		} else {
 

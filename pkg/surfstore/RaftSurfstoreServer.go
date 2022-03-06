@@ -303,7 +303,10 @@ func (s *RaftSurfstore) SendHeartbeat(ctx context.Context, _ *emptypb.Empty) (*S
 
 		output, err := client.AppendEntries(ctx, input)
 		if err != nil || output.Success == false {
-			fmt.Println("some thing went wrong!!")
+			if err == ERR_SERVER_CRASHED {
+
+			}
+			//fmt.Println("some thing went wrong!!")
 			return &Success{Flag: false}, nil
 		}
 		// if output != nil {
@@ -323,6 +326,7 @@ func (s *RaftSurfstore) SendHeartbeat(ctx context.Context, _ *emptypb.Empty) (*S
 func (s *RaftSurfstore) Crash(ctx context.Context, _ *emptypb.Empty) (*Success, error) {
 	s.isCrashedMutex.Lock()
 	s.isCrashed = true
+	fmt.Printf("[Server %d] is now crashed\n", s.serverId)
 	s.isCrashedMutex.Unlock()
 
 	return &Success{Flag: true}, nil
