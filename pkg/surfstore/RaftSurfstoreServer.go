@@ -193,9 +193,7 @@ func (s *RaftSurfstore) CommitEntry(serverId, entryId int64, commitChan chan *Ap
 	defer cancel()
 
 	output, err := client.AppendEntries(ctx, input)
-	for !output.Success{
-		client.
-	}
+
 	commitChan <- output
 	// TODO update state s.nextIndex
 
@@ -232,7 +230,7 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 			return output, ERR_SERVER_CRASHED
 		}
 		// try block until restore
-		for s.isCrashed(){
+		for s.isCrashed {
 			s.isCrashedMutex.Lock()
 			s.notCrashedCond.Wait()
 			s.isCrashedMutex.Unlock()
