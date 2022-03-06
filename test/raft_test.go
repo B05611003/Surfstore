@@ -188,3 +188,90 @@ func TestRaftRecoverable(t *testing.T) {
 	}
 
 }
+
+func TestRaftLogsCorrectlyOverwritten(t *testing.T) {
+	t.Logf("leader1 gets several requests while all other nodes are crashed. leader1 crashes. all other nodes are restored. leader2 gets a request. leader1 is restored.")
+	cfgPath := "./config_files/3nodes.txt"
+	test := InitTest(cfgPath, "8080")
+	defer EndTest(test)
+	filemeta1 := &surfstore.FileMetaData{
+		Filename:      "testFile1",
+		Version:       1,
+		BlockHashList: nil,
+	}
+	filemeta2 := &surfstore.FileMetaData{
+		Filename:      "testFile2",
+		Version:       1,
+		BlockHashList: nil,
+	}
+	filemeta3 := &surfstore.FileMetaData{
+		Filename:      "testFile3",
+		Version:       1,
+		BlockHashList: nil,
+	}
+	goldenMeta := surfstore.NewMetaStore("")
+	goldenLog := make([]*surfstore.UpdateOperation, 0)
+	goldenMeta.UpdateFile(test.Context, filemeta1)
+	goldenLog = append(goldenLog, &surfstore.UpdateOperation{
+		Term:         1,
+		FileMetaData: filemeta1,
+	})
+
+	test.Clients[0].SetLeader(test.Context, &emptypb.Empty{})
+	test.Clients[0].SendHeartbeat(test.Context, &emptypb.Empty{})
+
+	test.Clients[1].Crash(test.Context, &emptypb.Empty{})
+	test.Clients[2].Crash(test.Context, &emptypb.Empty{})
+	//client1 syncs
+	eChan := make(chan bool, 1)
+	go func() {
+		fmt.Println("start1")
+		test.Clients[0].UpdateFile(context.Background(), filemeta1)
+		fmt.Println("finish1")
+		eChan <- true
+	}()
+	eChan1 := make(chan bool, 1)
+	go func() {
+		fmt.Println("start2")
+		test.Clients[0].UpdateFile(context.Background(), filemeta2)
+		fmt.Println("finish2")
+		eChan1 <- true
+	}()
+	time.Sleep(time.Second)
+	test.Clients[0].Crash(test.Context, &emptypb.Empty{})
+	test.Clients[1].Restore(test.Context, &emptypb.Empty{})
+	test.Clients[2].Restore(test.Context, &emptypb.Empty{})
+	test.Clients[1].SetLeader(test.Context, &emptypb.Empty{})
+	test.Clients[1].SendHeartbeat(test.Context, &emptypb.Empty{})
+	eChan2 := make(chan bool, 1)
+	go func() {
+		fmt.Println("start3")
+		test.Clients[1].UpdateFile(context.Background(), filemeta3)
+		fmt.Println("finish3")
+		eChan2 <- true
+	}()
+	test.Clients[0].Restore(test.Context, &emptypb.Empty{})
+	if <-eChan {
+		fmt.Printf("update done\n")
+	}
+	if <-eChan1 {
+		fmt.Printf("update done\n")
+	}
+	if <-eChan2 {
+		fmt.Printf("update done\n")
+	}
+
+	for i, server := range test.Clients {
+		state, _ := server.GetInternalState(test.Context, &emptypb.Empty{})
+		if !SameLog(goldenLog, state.Log) {
+			t.Logf("num %d Logs do not match:\n%v\n%v\n", i, goldenLog, state.Log)
+			t.Fail()
+		}
+		if !SameMeta(goldenMeta.FileMetaMap, state.MetaMap.FileInfoMap) {
+			t.Logf("num %d MetaStore state is not correct:\n%v\n%v\n", i, goldenMeta.FileMetaMap, state.MetaMap.FileInfoMap)
+			t.Fail()
+		}
+
+	}
+
+}

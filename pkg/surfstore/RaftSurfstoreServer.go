@@ -95,8 +95,6 @@ func (s *RaftSurfstore) GetBlockStoreAddr(ctx context.Context, empty *emptypb.Em
 
 // equal the submit command
 func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) (*Version, error) {
-	// s.lock.Lock()
-	// defer s.lock.Unlock()
 	s.isCrashedMutex.Lock()
 	if s.isCrashed {
 		s.isCrashedMutex.Unlock()
@@ -111,6 +109,8 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 		}, ERR_NOT_LEADER
 	}
 
+	// s.lock.Lock()
+	// defer s.lock.Unlock()
 	op := UpdateOperation{
 		Term:         s.term,
 		FileMetaData: filemeta,
@@ -118,10 +118,10 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 	fmt.Printf("[Server %d]: get update file command with filemetadata:%v\n", s.serverId, filemeta)
 	s.log = append(s.log, &op)
 	commited := make(chan bool)
-
+	index := len(s.log) - 1
 	s.pendingCommits = append(s.pendingCommits, commited)
 
-	go s.AttemptCommit()
+	go s.AttemptCommit(index)
 	success := <-commited
 	fmt.Println("finish commit")
 	if success {
@@ -144,9 +144,11 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 // Aux function
 // Commit the entry to other follers and count if majority of them reply success
 // break if commit success
-func (s *RaftSurfstore) AttemptCommit() bool {
+func (s *RaftSurfstore) AttemptCommit(index int) bool {
 	// the index to commit
-	targetId := s.commitIndex + 1
+
+	// targetId := s.commitIndex + 1
+	targetId := int64(index)
 	commitChan := make(chan *AppendEntryOutput, len(s.ipList))
 	for i := range s.ipList {
 		if i != int(s.serverId) {
@@ -195,7 +197,7 @@ func (s *RaftSurfstore) CommitEntry(serverId, entryId int64, commitChan chan *Ap
 		input.PrevLogTerm = s.log[entryId-1].Term
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	output, err := client.AppendEntries(ctx, input)
