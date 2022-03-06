@@ -257,10 +257,7 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 			s.isLeaderMutex.Unlock()
 		}
 	}
-	// if len(input.Entries) == 0 {
-	// 	output.Success = true
-	// 	return output, nil
-	// }
+
 	//4. Append any new entries not already in the log
 	if !s.isLeader && len(input.Entries) != 0 {
 		fmt.Printf("[Server %d] log append, before:%v\n", s.serverId, s.log)
