@@ -48,10 +48,9 @@ type RaftSurfstore struct {
 	If not the leader, should indicate an error back to the client
 */
 func (s *RaftSurfstore) GetFileInfoMap(ctx context.Context, empty *emptypb.Empty) (*FileInfoMap, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+	time.Sleep(time.Second)
 	if !s.isLeader {
-		s.lock.Unlock()
+
 		return &FileInfoMap{FileInfoMap: s.metaStore.FileMetaMap}, ERR_NOT_LEADER
 	}
 	s.countAlive()
@@ -92,8 +91,7 @@ func (s *RaftSurfstore) GetBlockStoreAddr(ctx context.Context, empty *emptypb.Em
 
 // equal the submit command
 func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) (*Version, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
+
 	s.isCrashedMutex.Lock()
 	if s.isCrashed {
 		s.isCrashedMutex.Unlock()
