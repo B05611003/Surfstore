@@ -200,7 +200,11 @@ func (s *RaftSurfstore) CommitEntry(serverId, entryId int64, commitChan chan *Ap
 func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInput) (*AppendEntryOutput, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	fmt.Printf("Server %d get AppendEntries commmand.Input:%v \n", s.serverId, input)
+	if len(input.Entries) == 0 {
+		fmt.Printf("[Server %d] get heartbeat\n", s.serverId)
+	} else {
+		fmt.Printf("[Server %d] get AppendEntries commmand.Input:%v \n", s.serverId, input)
+	}
 	output := &AppendEntryOutput{
 		Success:      false,
 		MatchedIndex: -1,
@@ -209,7 +213,8 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 		return output, fmt.Errorf("old term\n")
 	}
 	if s.isCrashed {
-		return output, fmt.Errorf("server is crashed\n")
+		fmt.Printf("[Server %d] But server %d is crashed\n", s.serverId, s.serverId)
+		return output, ERR_SERVER_CRASHED
 	}
 
 	if input.Term > s.term {
@@ -226,9 +231,9 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 	// }
 	//4. Append any new entries not already in the log
 	if !s.isLeader && len(input.Entries) != 0 {
-		fmt.Printf("Server %d log append, before:%v\n", s.serverId, s.log)
+		fmt.Printf("[Server %d] log append, before:%v\n", s.serverId, s.log)
 		s.log = append(s.log, input.Entries...)
-		fmt.Printf("Server %d log append, now:%v\n", s.serverId, s.log)
+		fmt.Printf("[Server %d] log append, now:%v\n", s.serverId, s.log)
 	}
 	//5. If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, index
 	//of last new entry)
@@ -258,7 +263,7 @@ func (s *RaftSurfstore) SetLeader(ctx context.Context, _ *emptypb.Empty) (*Succe
 	if s.isCrashed {
 		return &Success{Flag: false}, ERR_SERVER_CRASHED
 	}
-	fmt.Printf("server%d is now leader\n", s.serverId)
+	fmt.Printf("[server%d] is now leader\n", s.serverId)
 	s.term++
 	s.isLeader = true
 	return &Success{Flag: true}, nil
@@ -273,15 +278,14 @@ func (s *RaftSurfstore) SendHeartbeat(ctx context.Context, _ *emptypb.Empty) (*S
 		return &Success{Flag: false}, nil
 	}
 	for idx, addr := range s.ipList {
-		fmt.Println(addr)
 		if int64(idx) == s.serverId {
 			continue
 		}
-		fmt.Printf("Server%d sent heartbeat to server %d\n", s.serverId, idx)
+		fmt.Printf("[Server %d] sent heartbeat to server %d\n", s.serverId, idx)
 		conn, err := grpc.Dial(addr, grpc.WithInsecure())
 		if err != nil {
 			fmt.Println(err)
-			return nil, err
+			return &Success{Flag: false}, nil
 		}
 		client := NewRaftSurfstoreClient(conn)
 		// TODO
@@ -299,7 +303,7 @@ func (s *RaftSurfstore) SendHeartbeat(ctx context.Context, _ *emptypb.Empty) (*S
 		output, err := client.AppendEntries(ctx, input)
 		if err != nil || output.Success == false {
 			fmt.Println("some thing went wrong!!")
-			return nil, nil
+			return &Success{Flag: false}, nil
 		}
 		// if output != nil {
 		// 	return &Success{
@@ -311,7 +315,7 @@ func (s *RaftSurfstore) SendHeartbeat(ctx context.Context, _ *emptypb.Empty) (*S
 		// TODO handle crashed server
 	}
 
-	return nil, nil
+	return &Success{Flag: true}, nil
 }
 
 // DO NOT EDIT
