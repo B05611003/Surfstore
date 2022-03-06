@@ -133,6 +133,7 @@ func syncLocal(client RPCClient, dirInfoMap map[string]fs.FileInfo, indexFileMet
 			// file found in dir, compare them
 			hashes, err := hashFile(path.Join(client.BaseDir, fileName), fileInfo, int64(client.BlockSize))
 			if err != nil {
+				fmt.Printf("error while onpeing file : %v", err)
 				return nil, nil, fmt.Errorf("error while hashing file : %v", err)
 			}
 
@@ -150,6 +151,7 @@ func syncLocal(client RPCClient, dirInfoMap map[string]fs.FileInfo, indexFileMet
 		} else {
 			hashes, err := hashFile(path.Join(client.BaseDir, fileName), fileInfo, int64(client.BlockSize))
 			if err != nil {
+				fmt.Printf("error while onpeing file : %v", err)
 				return nil, nil, fmt.Errorf("error while hashing file : %v", err)
 			}
 			localFileStatus[fileName] = New

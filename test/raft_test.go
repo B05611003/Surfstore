@@ -85,18 +85,24 @@ func TestRaftFollowersGetUpdates(t *testing.T) {
 	// TEST
 	leaderIdx := 0
 	test.Clients[leaderIdx].SetLeader(test.Context, &emptypb.Empty{})
-	// test.Clients[leaderIdx].SendHeartbeat(test.Context, &emptypb.Empty{})
+	test.Clients[leaderIdx].SendHeartbeat(test.Context, &emptypb.Empty{})
 	filemeta1 := &surfstore.FileMetaData{
 		Filename:      "testFile1",
 		Version:       1,
 		BlockHashList: nil,
 	}
 
-	test.Clients[leaderIdx].UpdateFile(context.Background(), filemeta1)
-
 	goldenMeta := surfstore.NewMetaStore("")
-	goldenMeta.UpdateFile(test.Context, filemeta1)
 	goldenLog := make([]*surfstore.UpdateOperation, 0)
+	test.Clients[leaderIdx].UpdateFile(context.Background(), filemeta1)
+	goldenMeta.UpdateFile(test.Context, filemeta1)
+	goldenLog = append(goldenLog, &surfstore.UpdateOperation{
+		Term:         1,
+		FileMetaData: filemeta1,
+	})
+	filemeta1.Version++
+	test.Clients[leaderIdx].UpdateFile(context.Background(), filemeta1)
+	goldenMeta.UpdateFile(test.Context, filemeta1)
 	goldenLog = append(goldenLog, &surfstore.UpdateOperation{
 		Term:         1,
 		FileMetaData: filemeta1,

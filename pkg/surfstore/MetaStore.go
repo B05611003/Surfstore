@@ -33,7 +33,7 @@ func (m *MetaStore) UpdateFile(ctx context.Context, fileMetaData *FileMetaData) 
 	// if the file already esist in the MataStore
 	if serverFileMetaData, ok := m.FileMetaMap[fileName]; ok {
 		// if the version has error
-		if fileMetaData.Version-serverFileMetaData.Version != 0 {
+		if fileMetaData.Version-serverFileMetaData.Version < 0 {
 			return &Version{
 				Version: -1,
 			}, fmt.Errorf("file version error: should be %d but %d", serverFileMetaData.Version+1, fileMetaData.Version)
