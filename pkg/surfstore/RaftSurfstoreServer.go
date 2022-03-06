@@ -301,14 +301,14 @@ func (s *RaftSurfstore) SendHeartbeat(ctx context.Context, _ *emptypb.Empty) (*S
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 
-		output, err := client.AppendEntries(ctx, input)
-		if err != nil || output.Success == false {
-			if err == ERR_SERVER_CRASHED {
+		client.AppendEntries(ctx, input)
+		// if err != nil || output.Success == false {
+		// 	if err == ERR_SERVER_CRASHED {
 
-			}
-			//fmt.Println("some thing went wrong!!")
-			return &Success{Flag: false}, nil
-		}
+		// 	}
+		// 	//fmt.Println("some thing went wrong!!")
+		// 	return &Success{Flag: false}, nil
+		// }
 		// if output != nil {
 		// 	return &Success{
 		// 		Flag: true,
