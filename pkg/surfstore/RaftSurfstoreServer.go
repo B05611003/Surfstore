@@ -193,6 +193,9 @@ func (s *RaftSurfstore) CommitEntry(serverId, entryId int64, commitChan chan *Ap
 	defer cancel()
 
 	output, err := client.AppendEntries(ctx, input)
+	if err != nil {
+		fmt.Printf("[Server %d] commitEntry append error:%v\n", s.serverId, err)
+	}
 
 	commitChan <- output
 	// TODO update state s.nextIndex
