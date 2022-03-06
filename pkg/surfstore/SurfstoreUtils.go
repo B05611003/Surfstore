@@ -65,6 +65,7 @@ func ClientSync(client RPCClient) {
 		log.Fatalf("error while local sync, %v", err)
 	}
 	// download the remote index.txt
+
 	remoteFileMetaMap := make(map[string]*FileMetaData)
 	err = client.GetFileInfoMap(&remoteFileMetaMap)
 	if err != nil {
