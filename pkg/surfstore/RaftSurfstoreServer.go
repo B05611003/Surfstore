@@ -58,21 +58,27 @@ func (s *RaftSurfstore) GetFileInfoMap(ctx context.Context, empty *emptypb.Empty
 
 func (s *RaftSurfstore) countAlive() {
 	count := 0
+	conns := make([]RaftSurfstoreClient, len(s.ipList))
+	for idx, addr := range s.ipList {
+		conn, err := grpc.Dial(addr, grpc.WithInsecure())
+		if err != nil {
+			fmt.Printf("error while dial\n")
+			return
+		}
+		client := NewRaftSurfstoreClient(conn)
+		conns[idx] = client
+	}
 	for count < (len(s.ipList)+1)/2 {
 		count = 0
-		for _, addr := range s.ipList {
-			conn, err := grpc.Dial(addr, grpc.WithInsecure())
-			if err != nil {
-				return
-			}
-			client := NewRaftSurfstoreClient(conn)
+		for idx := range s.ipList {
+
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			if state, err := client.IsCrashed(ctx, &emptypb.Empty{}); !state.IsCrashed && err == nil {
+			if state, err := conns[idx].IsCrashed(ctx, &emptypb.Empty{}); !state.IsCrashed && err == nil {
 				count++
 			}
 		}
-		// fmt.Printf("count:%d\n", count)
+		fmt.Printf("count:%d\n", count)
 	}
 	return
 }
@@ -121,6 +127,7 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 	fmt.Println("finish commit")
 	if success {
 		// commited, so send the heartbeat
+
 		s.SendHeartbeat(ctx, &emptypb.Empty{})
 		ver, err := s.metaStore.UpdateFile(ctx, filemeta)
 		if err != nil {
@@ -236,6 +243,7 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 		for s.isCrashed {
 			s.isCrashedMutex.Lock()
 			s.notCrashedCond.Wait()
+			fmt.Printf("[Server %d] restored from crashed\n", s.serverId)
 			s.isCrashedMutex.Unlock()
 		}
 	}

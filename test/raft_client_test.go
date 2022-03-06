@@ -3,6 +3,7 @@ package SurfTest
 import (
 	"os"
 	"testing"
+	"time"
 
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	//	"time"
@@ -313,7 +314,7 @@ func TestRaftRecoverable(t *testing.T) {
 	test := InitTest(cfgPath, "8080")
 	defer EndTest(test)
 	test.Clients[0].SetLeader(test.Context, &emptypb.Empty{})
-
+	test.Clients[0].SendHeartbeat(test.Context, &emptypb.Empty{})
 	worker1 := InitDirectoryWorker("test0", SRC_PATH)
 
 	defer worker1.CleanUp()
@@ -339,11 +340,14 @@ func TestRaftRecoverable(t *testing.T) {
 		eChan <- err1
 
 	}()
-
+	time.Sleep(time.Second)
 	test.Clients[1].Restore(test.Context, &emptypb.Empty{})
 	test.Clients[2].Restore(test.Context, &emptypb.Empty{})
 
 	err = <-eChan
+	if err != nil {
+		t.Fatalf("no sync")
+	}
 
 	//client1 syncs
 
