@@ -93,7 +93,7 @@ func ClientSync(client RPCClient) {
 					// if new file in this local sync already exist in server or server changed
 					fmt.Printf("[Client %s] remote has file need to change, uploading", client.BaseDir)
 					upload(client, localFileMetaData, &localFileMetaDataMap, localStatus[fileName])
-					localFileMetaDataMap[fileName].Version++
+
 				}
 			} else if remoteFileMetaData.Version < localFileMetaData.Version {
 				log.Println("something went wrong : local version highter than remote")
