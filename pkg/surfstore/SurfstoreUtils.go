@@ -64,13 +64,14 @@ func ClientSync(client RPCClient) {
 	if err != nil {
 		log.Fatalf("error while local sync, %v", err)
 	}
-	fmt.Printf("[Client %s] localFileMeta:%v\n", client.BaseDir, localFileMetaDataMap)
 	// download the remote index.txt
 	remoteFileMetaMap := make(map[string]*FileMetaData)
 	err = client.GetFileInfoMap(&remoteFileMetaMap)
 	if err != nil {
 		log.Fatalf("error while getting server info map, %v", err)
 	}
+	fmt.Printf("[Client %s] localFileMeta:%v\n", client.BaseDir, localFileMetaDataMap)
+	fmt.Printf("[Client %s] remoteFileMeta:%v\n", client.BaseDir, remoteFileMetaMap)
 
 	// check the server file base on client
 	// upload if needed
