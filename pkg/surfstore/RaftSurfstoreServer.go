@@ -245,8 +245,8 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 			fmt.Printf("[Server %d] restored from crashed\n", s.serverId)
 			s.isCrashedMutex.Unlock()
 		}
-		output.Success = true
-		return output, nil
+		// output.Success = true
+		// return output, nil
 	}
 
 	if input.Term > s.term {
