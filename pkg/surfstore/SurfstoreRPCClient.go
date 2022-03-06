@@ -143,7 +143,7 @@ func (surfClient *RPCClient) UpdateFile(fileMetaData *FileMetaData, latestVersio
 		}
 	}
 
-	return nil
+	return fmt.Errorf("no working leader")
 
 }
 
