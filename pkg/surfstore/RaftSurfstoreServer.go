@@ -266,7 +266,7 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 	//4. Append any new entries not already in the log
 	if !s.isLeader && len(input.Entries) != 0 {
 		fmt.Printf("[Server %d] log append, before:%v\n", s.serverId, s.log)
-		if isRestore {
+		if true {
 			if input.LeaderCommit < s.lastApplied {
 				s.log = s.log[:input.LeaderCommit+1]
 			}
