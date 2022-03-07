@@ -116,9 +116,9 @@ func (s *RaftSurfstore) UpdateFile(ctx context.Context, filemeta *FileMetaData) 
 		FileMetaData: filemeta,
 	}
 	fmt.Printf("[Server %d]: get update file command with filemetadata:%v\n", s.serverId, filemeta)
-	if len(s.log) > int(s.lastApplied) {
-		s.log = s.log[:s.lastApplied+1]
-	}
+	// if len(s.log) > int(s.lastApplied) {
+	// 	s.log = s.log[:s.lastApplied+1]
+	// }
 	s.log = append(s.log, &op)
 	commited := make(chan bool)
 	index := len(s.log) - 1
@@ -290,6 +290,8 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 			s.metaStore.UpdateFile(ctx, entry.FileMetaData)
 			fmt.Printf("[Server %d] new commit index syncing metaStore: %v\n", s.serverId, s.metaStore.FileMetaMap)
 		}
+	} else {
+		s.log = s.log[:len(s.log)-1]
 	}
 	output.Success = true
 
