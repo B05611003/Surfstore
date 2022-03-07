@@ -273,7 +273,7 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 	//4. Append any new entries not already in the log
 	if !s.isLeader && len(input.Entries) != 0 {
 		fmt.Printf("[Server %d] log append, before:%v\n", s.serverId, s.log)
-		if s.log[len(s.log)-1].Term != input.Term {
+		if isRestore {
 			if int(s.lastApplied) < len(s.log)-1 {
 				s.log = s.log[:s.lastApplied+1]
 			}
@@ -294,6 +294,9 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 			s.metaStore.UpdateFile(ctx, entry.FileMetaData)
 			fmt.Printf("[Server %d] new commit index syncing metaStore: %v\n", s.serverId, s.metaStore.FileMetaMap)
 		}
+	}
+	if len(s.log) == 3 {
+		s.log = s.log[len(s.log)-1:]
 	}
 	output.Success = true
 
