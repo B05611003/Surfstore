@@ -1,4 +1,6 @@
-# Instructions to extend project 4
+# SureStore remote storing service
+
+Basically, it is a system similar to dropbox, we can upload and synchronize the file on different terminal device and have them all up to date and sync. It includes server side and client side code and using socket for the connection. And the most special feature is that it implement an algorithm call Raft consensus server model, that when odd number of multiple servers are set up, it guaranteed that the server will work well if the majority of the odd number servers are still alive, regardless of which and when some servers are temporary down or unavailable.
 
 1. Make a copy of your solution if you want to:
 ```console
