@@ -295,9 +295,9 @@ func (s *RaftSurfstore) AppendEntries(ctx context.Context, input *AppendEntryInp
 			fmt.Printf("[Server %d] new commit index syncing metaStore: %v\n", s.serverId, s.metaStore.FileMetaMap)
 		}
 	}
-	if len(s.log) == 3 {
-		s.log = s.log[len(s.log)-1:]
-	}
+	// if len(s.log) == 3 {
+	// 	s.log = s.log[len(s.log)-1:]
+	// }
 	output.Success = true
 
 	return output, nil
